@@ -1,0 +1,53 @@
+---
+title: 'labstack/echo'
+description: 'Configure Scout in your Echo application in 1 minute or less'
+---
+
+We recommending integrating the Scout Echo middleware in your Echo applications.
+
+The Echo middleware will record key attributes for your API requests (such as client IPs and status codes).
+
+<ScoutInitialisationWarning language='Go' />
+
+1. If your backend exposes APIs to your frontend application, start by initialising Scout in your **frontend** with the following configuration:
+
+```javascript
+const SCOUT_PROJECT_ID = process.env.SCOUT_PROJECT_ID
+
+Scout.init(SCOUT_PROJECT_ID, {
+  // any backend deployments should go here
+  tracingOrigins: ['localhost', 'your-app.com/backend'],
+  networkRecording: {
+    enabled: true,
+    recordHeadersAndBody: true,
+  },
+  // ... extra Scout configs
+})
+```
+
+2. Configure Scout in your **Echo** backend:
+
+```go
+func main() {
+    scout.Init(
+        ...
+    )
+    defer scout.Stop()
+}
+```
+
+3. Integrate the Echo middleware:
+
+```go
+import (
+    ...
+    scoutEcho "github.com/scout-inc/scout-go/middleware/echo"
+)
+
+func main() {
+    // ...
+    server := echo.New()
+    server.Use(scoutEcho.Middleware())
+    // ...
+}
+```

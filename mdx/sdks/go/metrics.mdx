@@ -1,0 +1,131 @@
+---
+title: 'Metrics'
+---
+
+Metrics paint a picture of the overall health of your application and its components, including databases, caches, and endpoints.
+Since metrics are scoped to <InternalLink href='/sdks/go/configuration/environments'>environments</InternalLink>, they enable you to assess the state of your deployments.
+
+<QuickLink text='Reporting Metrics' />
+## Reporting Metrics
+
+Scout supports several useful metric types:
+
+- Arbitrary metrics
+- Histogram
+- Count
+- Duration
+
+<QuickLink text='RecordMetric' />
+### Arbitrary Values with RecordMetric
+
+At any time, you can report metrics using `RecordMetric`. While `RecordMetric` works for reporting any kind of metric (including timing/duration statistics), it does not offer control over sampling rates, so all events reported with `RecordMetric` will be recorded.
+Depending on how frequently you report metrics, this could translate into more usage and a heftier usage bill.
+
+It has the following definition:
+
+```go
+RecordMetric(ctx context.Context, name string, value float64, ...tags []attribute.KeyValue)
+```
+
+It can be used, for example, to track CPU usage over time:
+
+```go
+const heartBeatInterval = 5 * time.Second
+
+func ReportInfraMetrics() {
+    go func() {
+        ctx := context.Background()
+
+        for range time.Tick(heartBeatInterval) {
+            scout.RecordMetric(ctx, MetricNumCPU, float64(runtime.NumCPU()))
+        }
+    }()
+} 
+```
+
+<QuickLink text='Histogram' />
+### Histogram
+
+`Histogram` tracks the statistical distribution of a set of values for an event. It allows you to visualise the distribution of an events without the need to record each instance of the event and has the following definition:
+
+```
+Histogram(ctx context.Context, name string, value float64, tags []attribute.KeyValue, samplingRate float64)
+```
+
+It can be used, for example, to track CPU usage over time:
+
+```go
+import sMetric "github.com/scout-inc/scout-go/metric"
+
+const heartBeatInterval = 5 * time.Second
+
+func ReportInfraMetrics() {
+    go func() {
+        ctx := context.Background()
+
+        for range time.Tick(heartBeatInterval) {
+            // attributes (such as the service node ID) can be reported
+            // a `samplingRate` value of `1` will always report this event
+            // this line is functionally equivalent to the example in the 'Arbitrary Values with RecordMetric' section
+            sMetric.Histogram(ctx, MetricNumCPU, float64(runtime.NumCPU()), nil, 1)
+        }
+    }()
+} 
+```
+
+<QuickLink text='Count' />
+### Count
+
+`Count` keeps track of the sum of instances of an event. It has the following definition:
+
+```
+Count(ctx context.Context, name string, tags []attribute.KeyValue, samplingRate float64)
+```
+
+It can be used, for example, to track email open rates for a marketting campaign:
+
+```go
+import sMetric "github.com/scout-inc/scout-go/metric"
+
+func OnEmailOpen(ctx context.Context, campaign string) {
+    sMetric.Count(ctx, fmt.Sprintf("%s-email-open", campaign), nil, 1)
+}
+```
+
+<QuickLink text='Duration' />
+### Duration
+
+`Duration` enables you to track timing information for your events. Although you can provide your duration values in any `time.Duration` format, `Duration` ultimately reports your values in seconds.
+
+`Count` has the following definition:
+```go
+Count(ctx context.Context, name string, tags []attribute.KeyValue, rate float64)
+```
+
+It can be used, for example, to report the time it takes to generate a thumbnail image for a new user's profile picture:
+
+```go
+import sMetric "github.com/scout-inc/scout-go/metric"
+
+func GenerateThumbnail(ctx context.Context, user User) {
+    start := time.Now()
+
+    thumbnailUrl, _ := ResizeImage(user.AvatarURL)
+
+    attributes := []attribute.KeyValue{
+        {
+            Key: attribute.Key("user.id"),
+            Value: attribute.StringValue(user.ID),
+        },
+        {
+            Key: attribute.Key("user.avatar_url"),
+            Value: attribute.StringValue(user.AvatarURL),
+        },
+        {
+            Key: attribute.Key("thumbnail_url"),
+            Value: attribute.StringValue(thumbnailUrl),
+        },
+    }
+    sMetric.Duration(ctx, "thumbnail-generation" time.Since(start).Seconds(), attributes, 1)
+}
+```

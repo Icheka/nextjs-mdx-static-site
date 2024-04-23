@@ -1,0 +1,53 @@
+---
+title: 'gorilla/mux'
+description: 'Configure Scout in your Gorilla Mux application in 1 minute or less'
+---
+
+We recommending integrating the Scout Gorilla Mux middleware in your Gorilla Mux applications.
+
+The Gorilla Mux middleware will record key attributes for your API requests (such as client IPs and status codes).
+
+<ScoutInitialisationWarning language='Go' />
+
+1. If your backend exposes APIs to your frontend application, start by initialising Scout in your **frontend** with the following configuration:
+
+```javascript
+const SCOUT_PROJECT_ID = process.env.SCOUT_PROJECT_ID
+
+Scout.init(SCOUT_PROJECT_ID, {
+  // any backend deployments should go here
+  tracingOrigins: ['localhost', 'your-app.com/backend'],
+  networkRecording: {
+    enabled: true,
+    recordHeadersAndBody: true,
+  },
+  // ... extra Scout configs
+})
+```
+
+2. Configure Scout in your **Gorilla Mux** backend:
+
+```go
+func main() {
+    scout.Init(
+        ...
+    )
+    defer scout.Stop()
+}
+```
+
+3. Integrate the Gorilla Mux middleware:
+
+```go
+import (
+    ...
+    scoutMux "github.com/scout-inc/scout-go/middleware/gorillamux"
+)
+
+func main() {
+    // ...
+    r := mux.NewRouter()
+    r.Use(scoutMux.Middleware)
+    // ...
+}
+```

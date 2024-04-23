@@ -1,0 +1,89 @@
+---
+title: 'The Right Way to Go'
+description: 'Instrumenting your Go applications'
+---
+
+<QuickLink text='Basic Usage' />
+
+<BlockQuote>
+    Scout's Go SDK fully supports reporting metrics, events, logs and traces (MELT).
+</BlockQuote>
+
+## Basic Usage
+
+<WarningQuote>
+    Using a framework?
+    <br />
+    Check the **Frameworks** tab in the sidebar to see our helper libraries for the most common Go frameworks.
+</WarningQuote>
+
+<QuickLink text='Install' />
+### Install
+
+```
+go get github.com/scout-inc/scout-go
+```
+<QuickLink text='Import' />
+### Import 
+
+```go
+import "github.com/scout-inc/scout-go"
+```
+
+<QuickLink text='Initialise' />
+### Initialise
+
+Ideally, you should initialise Scout as early as possible. The app's entrypoint (`main`) is usually the best place to.
+
+You can find your unique **Scout ID** in your Project dashboard.
+
+```go
+package main
+
+import (
+    "github.com/scout-inc/scout-go"
+    scoutLog "github.com/scout-inc/scout-go/log"
+    log "github.com/sirupsen/logrus"
+)
+
+var (
+    scoutID     = os.Getenv("SCOUT_PROJECT_ID")
+    environment = os.Getenv("ENVIRONMENT")
+    gitSha      = os.Getenv("GIT_SHA")
+    serviceName = "payments-service"
+)
+
+func main() {
+    scout.Init(
+		scout.WithProjectID(scoutID),
+		scout.WithEnvironment(environment),
+		scout.WithServiceName(serviceName),
+		scout.WithServiceVersion(gitSha), // this is not strictly necessary, but it's good practice
+	)
+	defer scout.Stop()
+
+    // report logs
+    scoutLog.Init()
+}
+```
+
+<QuickLink text='Verify' />
+### Verify
+
+Verify that everything was set up properly and is working by inspecting the <ExternalLink href='https://app.scout.dev/errors'>Errors</ExternalLink> and <ExternalLink href='https://app.scout.dev/logs'>Logs</ExternalLink> tabs of your Scout dashboard for telemetry.
+
+Scout will automatically collect logs and panics throughout your app. To report errors, use the `scout.RecordError` method.
+
+Add the following snippet immediately below your Scout configuration and run your application to test quickly.
+
+```go
+func main() {
+    // Scout configuration...
+
+    log.Info("Looking good!")
+
+    ctx := context.TODO() // create a context reference if you do not already have one
+    err := errors.New("Testing Scout")
+    scout.RecordError(ctx, err)
+}
+```

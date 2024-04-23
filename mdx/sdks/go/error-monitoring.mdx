@@ -1,0 +1,82 @@
+---
+title: 'Error Monitoring'
+---
+
+Scout automatically collects and reports panics and context-associated errors (for example, errors that occur in request handlers that use one of our framework middleware).
+
+Besides collecting and reporting errors, Scout can intelligently associate errors with frontend sessions. This is particularly useful because it enables you to do things like view backend errors that occurred in response to frontend events, including API calls.
+
+<ScoutInitialisationWarning language='Go' />
+
+<QuickLink text='Getting Started' />
+## Getting Started
+
+After configuring Scout in your entrypoint function, you should already be able to automatically report panics with no further setup.
+
+<QuickLink text='Recording Arbitrary Errors' />
+
+## Reporting Arbitrary Errors
+
+Idiomatic Go should only use panics when the application (or goroutine) absolutely cannot continue running. For most usecases, the idiomatic approach is to return and report **errors**.
+It is especially important for developers switching from other programming languages, like Python or JavaScript, to be aware that Go has a slightly different meaning for the term **error** and, in fact, raises errors to first-class structure status.
+
+That said, reporting errors with Scout only takes one line:
+
+```go
+ctx := context.TODO() // your current context, which can reference anything from a network request to a database transaction
+err := errors.New("Some error")
+
+scout.RecordError(ctx, err) // report error to Scout
+```
+
+#### Here's a more elaborate example:
+
+```go
+func UpdateUserProfile(ctx context.Context, user *User) error {
+	// validate user's contact phone number
+	if _, err := validations.IsValidPhone(&user.Phone); err != nil {
+		scout.RecordError(ctx, err)
+		return err
+	}
+	// some code
+}
+```
+
+<QuickLink text='Enriching Errors with Attributes' />
+
+## Enriching Errors with Attributes
+
+Sometimes, reporting an error isn't enough and we want to associate contextual information that can be useful for debugging issues down the line.
+Scout enables this via a third argument to the `scout.RecordError` function: `scout.RecordError(ctx, err, ...attributes)`
+
+```go
+import (
+    ...
+    "go.opentelemetry.io/otel/attribute"
+)
+
+func UpdateUserProfile(ctx context.Context, user *User) error {
+	// validate user's contact phone number
+	if _, err := validations.IsValidPhone(&user.Phone); err != nil {
+		scout.RecordError(ctx, err, attributes.String("email", user.Email), attributes.String("phone", attributes.String(user.Phone)))
+		return err
+	}
+	// some code
+}
+```
+
+You can have an arbitrary number of attributes.
+
+<QuickLink text='Using Frameworks' />
+
+## Using Frameworks
+
+The Scout SDK is designed to be framework-agnostic. This means that you can use Scout's rich suite of instrumentation features with nothing more than the Go language itself.
+
+In spite of this, many developers and teams rely on robust backend frameworks to abstract a lot of low-level functionality, including session tracking, cookie management, authentication and authorisation.
+
+To help you write less code to configure Scout, we've included helper libraries for the most common Go frameworks, with more in the pipeline.
+
+See the **Frameworks** tab in the sidebar for a list of frameworks and documentation for our helper libraries.
+
+If you would like to request a library for a framework we do not currently have one for, please reach out to us via email at <ExternalLink href='mailto:ideas@getscout.dev'>ideas@getscout.dev</ExternalLink>.

@@ -1,0 +1,67 @@
+---
+title: '99designs/gqlgen'
+description: 'Configure Scout in your gqlgen application in 1 minute or less'
+---
+
+We recommending integrating the Scout gqlgen middleware in your gqlgen applications.
+
+The gqlgen middleware will record logs and errors for your GraphQL requests.
+
+<ScoutInitialisationWarning language='Go' />
+
+1. If your backend exposes APIs to your frontend application, start by initialising Scout in your **frontend** with the following configuration:
+
+```javascript
+const SCOUT_PROJECT_ID = process.env.SCOUT_PROJECT_ID
+
+Scout.init(SCOUT_PROJECT_ID, {
+  // any backend deployments should go here
+  tracingOrigins: ['localhost', 'your-app.com/backend'],
+  networkRecording: {
+    enabled: true,
+    recordHeadersAndBody: true,
+  },
+  // ... extra Scout configs
+})
+```
+
+2. Configure Scout in your **gqlgen** backend:
+
+```go
+func main() {
+    scout.Init(
+        ...
+    )
+    defer scout.Stop()
+}
+```
+
+3. Integrate the gqlgen middleware:
+
+```go
+import (
+    ...
+    gqlHandler "github.com/99designs/gqlgen/graphql/handler"
+    
+    "github.com/scout-inc/scout-go"
+    scoutGin "github.com/scout-inc/scout-go/middleware/gin"
+)
+
+func main() {
+    // ...
+    gqlServer := gqlHandler.New(
+      ...
+    )
+
+    // log GraphQL operations and associate requests with your frontend sessions
+    // SERVICE_NAME should be the same one used in initialising Scout with `scout.WithServiceName`
+    gqlServer.Use(scout.NewGraphqlTracer(SERVICE_NAME).WithRequestFieldLogging())
+
+    // capture panics
+    gqlServer.SetRecoverFunc(scout.GraphQLRecoverFunc())
+    
+    // GQL_SERVICE_NAME can be any descriptive name for your gqlgen server (e.g "orders-api")
+    server.SetErrorPresenter(highlight.GraphQLErrorPresenter(GQL_SERVICE_NAME))
+    // ...
+}
+```

@@ -1,0 +1,53 @@
+---
+title: 'go-chi/chi'
+description: 'Configure Scout in your go-chi application in 1 minute or less'
+---
+
+We recommending integrating the Scout Chi middleware in your Chi applications.
+
+The Chi middleware will record key attributes for your API requests (such as client IPs and status codes).
+
+<ScoutInitialisationWarning language='Go' />
+
+1. If your backend exposes APIs to your frontend application, start by initialising Scout in your **frontend** with the following configuration:
+
+```javascript
+const SCOUT_PROJECT_ID = process.env.SCOUT_PROJECT_ID
+
+Scout.init(SCOUT_PROJECT_ID, {
+  // any backend deployments should go here
+  tracingOrigins: ['localhost', 'your-app.com/backend'],
+  networkRecording: {
+    enabled: true,
+    recordHeadersAndBody: true,
+  },
+  // ... extra Scout configs
+})
+```
+
+2. Configure Scout in your **Chi** backend:
+
+```go
+func main() {
+    scout.Init(
+        ...
+    )
+    defer scout.Stop()
+}
+```
+
+3. Integrate the go-chi middleware:
+
+```go
+import (
+    ...
+    scoutChi "github.com/scout-inc/scout-go/middleware/chi"
+)
+
+func main() {
+    // ...
+    r := chi.NewRouter()
+    r.Use(scoutChi.Middleware)
+    // ...
+}
+```

@@ -1,0 +1,184 @@
+---
+title: 'Logging'
+---
+
+Scout automatically collects and aggregates your logs. We go beyond log-collection to actually linking your logs with associated backend errors  and frontend sessions.
+
+In this page, we'll show you how to get the most value from your logs using Scout.
+
+<ScoutInitialisationWarning language='Go' />
+
+<QuickLink text='Getting Started' />
+## Getting Started
+
+After configuring Scout in your entrypoint function, collecting logs is as simple as calling the `scoutLog.Init()` function:
+
+```go
+import (
+    scoutLogs "github.com/scout-inc/scout-go/log"
+)
+
+func main() {
+    // Configure Scout...
+
+    scoutLog.Init()
+}
+```
+
+Then you can write your log statements in any part of your application as usual and Scout will automatically collect and report them:
+
+```go
+import (
+    log "github.com/sirupsen/logrus"
+)
+
+func DoSomething() {
+    log.Info("Doing something...")
+}
+```
+
+<QuickLink text='Structured Logging' />
+## Structured Logging
+
+Structured logging takes the contents of a log and puts them into a structured format, along with contextual information, that simplifies parsing and analysis.
+
+<BlockQuote>
+    Structured logs are inherently more valuable and can be extremely powerful.
+</BlockQuote>
+
+When creating structured logs, contextual information is injected as **properties**. Contextual information can be timestamps, function execution durations, customer attributes like emails and user IDs, etc.
+
+Scout supports structured logging out of the box via the `logrus.WithField` function:
+
+```go
+import (
+	"time"
+
+	log "github.com/sirupsen/logrus"
+)
+
+type User struct {
+	Email string
+}
+
+func ProcessPayment(user User, amount float64, currency string) {
+	start := time.Now()
+	defer func() {
+		log.WithField("startedAt", start).WithField("duration", time.Since(start)).Info("ProcessPayment executed")
+	}()
+
+	// process payment
+	log.WithField("user.email", user.Email).WithField("trx.amount", amount).WithField("trx.currency", currency).WithField("trx.processedAt", time.Now()).Info("Successfully processed payment")
+}
+```
+
+<QuickLink text='Associating Logs with Sessions' />
+## Associating Logs with Frontend Sessions
+
+Scout makes heavy use of `context` for keeping track of pertinent information like sessions.
+
+If you have <InternalLink href='/quick-start/frontend/overview'>Scout set up for your frontend application</InternalLink> you can very easily link your logs with the frontend sessions and requests that initiate them.
+
+<WarningQuote>
+    The examples in this section assume that you have instrumentation configured for your frontend application.
+
+    See the <InternalLink href='/quick-start/frontend/overview'>frontend quick-start</InternalLink> to configure your frontend application in one minute or less.
+</WarningQuote>
+
+In request handlers, passing your context object to `logrus` will automatically link any frontend requests associated with that context to your logs. The exact mechanism of retrieving a reference to your context will differ depending on your backend framework.
+
+```go
+log.WithContext(ctx).Info("Updated profile for user")
+```
+
+This is what the full code could look like for a **Go Fiber** application:
+
+```go
+package main
+
+import (
+    "context"
+
+    "github.com/scout-inc/scout-go"
+    "github.com/scout-inc/scout-go/log"
+    scoutFiber "github.com/scout-inc/scout-go/middleware/fiber"
+    
+    "github.com/gofiber/fiber/v2"
+    "github.com/sirupsen/logrus"
+)
+
+func main() {
+    scout.Init(
+		scout.WithProjectID(scoutID),
+		scout.WithEnvironment(environment),
+		scout.WithServiceName(serviceName),
+		scout.WithServiceVersion(gitSha),
+	)
+	defer scout.Stop()
+
+    scoutLog.Init()
+
+    app := fiber.New()
+	app.Use(scoutFiber.Middleware())
+
+	app.Get("/", func(ctx *fiber.Ctx) error {
+		log.WithContext(ctx.Context()).Info("New GET request at /")
+		return ctx.SendString("Hello, world!")
+	})
+
+	log.Fatal(app.Listen(":5000"))
+}
+```
+
+See the **Frameworks** tab in the sidebar for examples specific to other frameworks.
+
+<QuickLink text='Using Frameworks' />
+
+## Using Frameworks
+
+The Scout SDK is designed to be framework-agnostic. This means that you can use Scout's rich suite of instrumentation features with nothing more than the Go language itself.
+
+In spite of this, many developers and teams rely on robust backend frameworks to abstract a lot of low-level functionality, including session tracking, cookie management, authentication and authorisation.
+
+To help you write less code to configure Scout, we've included helper libraries for the most common Go frameworks, with more in the pipeline.
+
+See the **Frameworks** tab in the sidebar for a list of frameworks and documentation for our helper libraries.
+
+If you would like to request a library for a framework we do not currently have one for, please reach out to us via email at <ExternalLink href='mailto:ideas@getscout.dev'>ideas@getscout.dev</ExternalLink>.
+
+<QuickLink text='Debug Mode' />
+
+## Debug Mode
+
+We recommend running Scout in debug mode in **development** environments. Debug mode outputs verbose logs that can be useful during development/testing.
+
+Enable debug mode via the `scout.SetDebugMode` function:
+
+```go
+func main() {
+    // Configure Scout...
+
+    if env == "dev" {
+        scout.SetDebugMode(log.StandardLogger())
+    }
+}
+```
+
+Debug mode outputs verbose logs that can increase your usage (and, consequently, your bill). We recommend only running debug mode in development, unless you think you need it in your production environment.
+
+<QuickLink text='Disabling Terminal Output' />
+
+## Disabling Terminal Output
+
+You might want to let Scout collect your logs while you prevent writing logs to the terminal. Security and reducing cloud infrastructure costs (e.g for CloudWatch) are good reasons why you might consider this.
+
+To disable streaming logs to the terminal, use the `scout.DisableOutput` function:
+
+```go
+func main() {
+    // Configure Scout...
+    // Initialise Scout Log
+
+    scout.DisableOutput()
+}
+```

@@ -1,0 +1,96 @@
+---
+title: 'Get Started with Scout in your Go Application'
+description: 'Get started with Scout in one minute or less'
+---
+
+<QuickLink id='get-started-with-scout' text='Get Started with Scout' />
+
+Configuring your Go application to start sending telemetry to Scout is easy and straightforward.
+All you need is your Scout ID, which you can find in your Scout dashboard.
+
+Although Scout offers so much more, this quickstart guide will focus on the basics: setting you up in one minute or less.
+
+For an in-depth exploration of the Scout Go SDK, including middleware for popular libraries like **Fiber** and **Gorilla Mux**, check out our <InternalLink>Go SDK documentation</InternalLink>.
+
+<QuickLink id='usage' text='Usage' />
+
+## Usage
+
+### Require package:
+
+```
+go get github.com/scout-inc/scout-go
+```
+
+### In your entrypoint function, initialise Scout:
+(This is usually `main`)
+
+```go
+import (
+    "github.com/scout-inc/scout-go"
+    scoutLog "github.com/scout-inc/scout-go/log"
+
+    // we work closely with logrus
+    // it's incredibly easy to integrate with any application
+    log "github.com/sirupsen/logrus"
+)
+
+var (
+    scoutID     = os.Getenv("SCOUT_PROJECT_ID")
+    environment = os.Getenv("ENVIRONMENT")
+    gitSha      = os.Getenv("GIT_SHA")
+)
+
+func main() {
+    // some code
+
+    // configure Scout
+    scout.Init(
+		scout.WithProjectID(scoutID),
+		scout.WithEnvironment(environment),
+		scout.WithServiceName("orders-service"),
+		scout.WithServiceVersion(gitSha), // this is not strictly necessary, but it's good practice
+	)
+	defer scout.Stop()
+
+    // some code
+}
+```
+<QuickLink id='add-logging-instrumentation' text='Add logging instrumentation' />
+
+### Add logging instrumentation in one line
+
+```go
+func main() {
+    // Scout configuration above...
+
+    // Init() instructs Scout to start collecting logs
+    scoutLog.Init()
+
+    // some code
+}
+```
+
+### Log as usual
+
+```go
+func DoSomethingGreat() {
+    // some code
+
+    log.Info("Did something great")
+}
+```
+
+<QuickLink id='errors' text='Errors' />
+
+### Errors
+
+Record errors using `scout.RecordError()`:
+
+```go
+func HandlePayment(ctx context.Context) {
+    // some code
+
+    scout.RecordError(ctx, errors.New("Insufficient wallet balance"))
+}
+```

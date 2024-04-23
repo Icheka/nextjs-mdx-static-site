@@ -1,0 +1,32 @@
+---
+title: 'Versioning & Releases'
+---
+
+<ScoutInitialisationWarning language='Go' />
+
+A release is a version of your service (identified by `scout.WithServiceName`) that is deployed to an environment (identified by `scout.WithEnvironment`).
+
+We recommend configuring Scout with your release/version information. Doing so enables you to:
+
+- Track down and identify which commit introduced an issue.
+- Evaluate the health of a new release by comparing error metrics with metrics for older releases.
+
+<QuickLink text='Configuring Scout with Versioning' />
+## Configuring Scout with Versioning
+
+Although your release/version ID is arbitrary and completely up to you, we recommend adopting one of these strategies:
+
+1. **Git Commit SHA:** You can inject your commit SHA as a runtime environment variable and retrieve this value as part of the initialisation step:
+```go
+func main() {
+    scout.Init(
+        scout.WithProjectID(os.Getenv("SCOUT_PROJECT_ID))
+        scout.WithServiceName("iam-service"),
+		scout.WithServiceVersion(os.Getenv("GIT_COMMIT_SHA")),
+        // extra configuration
+    )
+    defer scout.Stop()
+}
+```
+2. **Semantic Versioning:** These are version IDs that follow the format: _**major_version.minor_version.patch_version.release_version.pre-release_version**_.
+Only the **major** version number is required for a version ID to be considered semantic. See <ExternalLink href='https://semver.org'>https://semver.org</ExternalLink> for more information.

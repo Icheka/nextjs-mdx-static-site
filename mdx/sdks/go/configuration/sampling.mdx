@@ -1,0 +1,43 @@
+---
+title: 'Sampling'
+---
+
+<ScoutInitialisationWarning language='Go' />
+
+<QuickLink text='Overview' />
+
+Scout excels at collating information about the health and reliability of your applications, and having information is always a good thing.
+However, it is possible to become indundated by having **too much information** &mdash; so much information that actionable insights become hidden in a sea of noise and repetitive alerts. This is where sampling comes in.
+
+Sampling enables you to decide what percentage of events Scout records and reports. If you had 10 users experience a specific error, say, it would not be particularly more helpful for Scout to report all ten instances of the same error. Taking a fraction of this number (which you can easily extrapolate to the thousands or tens of thousands of users you have) is much more efficient and ultimately lowers your usage bill.
+
+<QuickLink text='Sampling Errors' />
+## Sampling Errors
+
+The `scout.WithSamplingRateMap` function enables you to set a sampling rate for <InternalLink href='/sdks/go/error-monitoring'>errors</InternalLink> and traces (coming soon), specified as a percentage of events to be recorded.
+Its value should be a number between 0 (0%) and 1 (100%, inclusive). By default, the sampling rate is 1 (i.e all errors are reported).
+
+```go
+func main() {
+    scout.Init(
+        // ...
+        scout.WithSamplingRate(0.25),
+    )
+}
+```
+
+<QuickLink text='Sampling Metrics' />
+## Sampling Metrics
+
+The `scout.WithMetricSamplingRate` function enables you to set a sampling rate for <InternalLink href='/sdks/go/metrics'>metrics</InternalLink>, specified as a percentage of events to be recorded.
+Its value should be a number between 0 (0%) and 1 (100%, inclusive). By default, the sampling rate is 1 (i.e all metrics are reported).
+
+```go
+func main() {
+    scout.Init(
+        // ...
+        scout.WithMetricSamplingRate(0.25),
+    )
+    defer scout.Stop()
+}
+```

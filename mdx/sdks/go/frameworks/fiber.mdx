@@ -1,0 +1,53 @@
+---
+title: 'gofiber/fiber'
+description: 'Configure Scout in your Fiber application in 1 minute or less'
+---
+
+We recommending integrating the Scout Fiber middleware in your Fiber applications.
+
+The Fiber middleware will record key attributes for your API requests (such as client IPs and status codes).
+
+<ScoutInitialisationWarning language='Go' />
+
+1. If your backend exposes APIs to your frontend application, start by initialising Scout in your **frontend** with the following configuration:
+
+```javascript
+const SCOUT_PROJECT_ID = process.env.SCOUT_PROJECT_ID
+
+Scout.init(SCOUT_PROJECT_ID, {
+  // any backend deployments should go here
+  tracingOrigins: ['localhost', 'your-app.com/backend'],
+  networkRecording: {
+    enabled: true,
+    recordHeadersAndBody: true,
+  },
+  // ... extra Scout configs
+})
+```
+
+2. Configure Scout in your **Fiber** backend:
+
+```go
+func main() {
+    scout.Init(
+        ...
+    )
+    defer scout.Stop()
+}
+```
+
+3. Integrate the Fiber middleware:
+
+```go
+import (
+    ...
+    scoutFiber "github.com/scout-inc/scout-go/middleware/fiber"
+)
+
+func main() {
+    // ...
+    server := fiber.New()
+    server.Use(scoutFiber.Middleware())
+    // ...
+}
+```

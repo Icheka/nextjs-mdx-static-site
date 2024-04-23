@@ -1,0 +1,56 @@
+---
+title: 'Environments'
+---
+
+Scout allows you to tag events to the environment they are associated with. Whether you are running a production app, or on a staging server, you can tag environments using the `scout.WithEnvironment` configuration function.
+
+<ScoutInitialisationWarning language='Go' />
+
+```go
+var (
+    scoutID     = os.Getenv("SCOUT_PROJECT_ID")
+    environment = os.Getenv("ENVIRONMENT")
+)
+
+func main() {
+    // Configure Scout
+    scout.Init(
+        scout.WithProjectID(scoutID),
+		scout.WithEnvironment(environment),
+        // extra configuration
+    )
+}
+```
+
+Scout automatically creates new environments with the value passed to `scout.WithEnvironment`, so arbitrary environments like "john-local" will work too.
+
+```go
+var (
+    scoutID     = os.Getenv("SCOUT_PROJECT_ID")
+    environment = os.Getenv("ENVIRONMENT")
+)
+
+func main() {
+    if environment == "local" {
+		user, err := user.Current()
+		if err != nil {
+			panic("Failed to retrieve current user")
+		}
+
+		username := user.Username
+		environment = fmt.Sprintf("%s-local", username)
+	}
+
+    // Configure Scout
+    scout.Init(
+        scout.WithProjectID(scoutID),
+		scout.WithEnvironment(environment),
+        // extra configuration
+    )
+    defer scout.Stop()
+}
+```
+
+We recommend creating separate environments with different <InternalLink href='/sdks/go/configuration/sampling'>sampling configurations</InternalLink>. Doing this can help you effectively manage your usage and minimise your Scout bills.
+
+Environments cannot be deleted but any number of environments can be created in a project.
